@@ -1,0 +1,431 @@
+-- Create Military Intervention Database --
+
+CREATE DATABASE military_interventions; 
+USE military_interventions;
+
+-- Create 17 tables --
+
+CREATE TABLE region (
+region_id TINYINT PRIMARY KEY, 
+reg_name VARCHAR(45),
+reg_altName VARCHAR(45)
+);
+
+CREATE TABLE country (
+country_id TINYINT PRIMARY KEY,
+region_id TINYINT NOT NULL,
+country_name VARCHAR(45),
+country_altName VARCHAR(45),
+FOREIGN KEY (region_id) REFERENCES region(region_id) 
+);
+
+CREATE TABLE partnership (
+country_id TINYINT PRIMARY KEY, -- no auto-increment
+partner_id TINYINT, -- allow null
+alliance_name VARCHAR(100),
+FOREIGN KEY (partner_id) REFERENCES country(country_id) 
+);
+
+CREATE TABLE budget (
+budget_id TINYINT auto_increment PRIMARY KEY, 
+country_id TINYINT NOT NULL, 
+total_amt DOUBLE,
+military_amt DOUBLE,
+start_date DATE,
+end_date DATE,
+FOREIGN KEY (country_id) REFERENCES country(country_id)
+);
+
+CREATE TABLE economy (
+econ_id TINYINT auto_increment PRIMARY KEY, 
+country_id TINYINT NOT NULL, 
+GDP_per_cap DOUBLE,
+unemploymt_rt DOUBLE,
+poverty_rt DOUBLE,
+population BIGINT, 
+start_date DATE,
+end_date DATE,
+FOREIGN KEY (country_id) REFERENCES country(country_id)
+);
+
+CREATE TABLE party (
+party_id TINYINT PRIMARY KEY,
+party_name VARCHAR(45)
+);
+
+CREATE TABLE leader (
+leader_id TINYINT auto_increment PRIMARY KEY,
+party_id TINYINT NOT NULL,
+fName VARCHAR(45),
+lName VARCHAR(45),
+birth_date DATE,
+death_date DATE,
+home_state VARCHAR(45),
+FOREIGN KEY (party_id) REFERENCES party(party_id) 
+);
+
+CREATE TABLE administration (
+admin_id TINYINT auto_increment PRIMARY KEY,
+leader_id TINYINT NOT NULL,
+country_id TINYINT NOT NULL,
+admin_title VARCHAR(45),
+start_date DATE,
+end_date DATE,
+FOREIGN KEY (leader_id) REFERENCES leader(leader_id), 
+FOREIGN KEY (country_id) REFERENCES country(country_id) 
+);
+
+CREATE TABLE branch (
+branch_id TINYINT auto_increment PRIMARY KEY,
+admin_id TINYINT NOT NULL,
+branch_name VARCHAR(45),
+personnel_size BIGINT
+);
+
+CREATE TABLE intervention (
+intervention_id TINYINT auto_increment PRIMARY KEY,
+acting_country_id TINYINT NOT NULL,
+location_country_id TINYINT NOT NULL, 
+admin_id TINYINT NOT NULL,
+inter_name VARCHAR(100),
+inter_description VARCHAR(1000), 
+start_date DATE, 
+end_date DATE,
+FOREIGN KEY (location_country_id) REFERENCES country(country_id), 
+FOREIGN KEY (acting_country_id) REFERENCES country(country_id),
+FOREIGN KEY (admin_id) REFERENCES administration(admin_id) 
+);
+
+CREATE TABLE deployment (
+deploy_id TINYINT auto_increment PRIMARY KEY,
+intervention_id TINYINT NOT NULL,
+branch_id TINYINT NOT NULL,
+division_name VARCHAR(45),
+troop_nums INT,
+special_op BIT, -- true/false (0 or 1) field
+FOREIGN KEY (branch_id) REFERENCES branch(branch_id), 
+FOREIGN KEY (intervention_id) REFERENCES intervention(intervention_id) 
+);
+
+CREATE TABLE incident (
+incident_id TINYINT auto_increment PRIMARY KEY,
+intervention_id TINYINT NOT NULL,
+deploy_id TINYINT NOT NULL,
+incident_site VARCHAR(45),
+incident_description VARCHAR(300),
+incident_name VARCHAR(45),
+FOREIGN KEY (intervention_id) REFERENCES intervention(intervention_id), 
+FOREIGN KEY (deploy_id) REFERENCES deployment(deploy_id) 
+);
+
+CREATE TABLE objective (
+objective_id TINYINT auto_increment PRIMARY KEY,
+objective_primary VARCHAR(100),
+objective_secondary VARCHAR(100),
+notes VARCHAR(100)
+);
+
+CREATE TABLE mission (
+mission_id TINYINT auto_increment PRIMARY KEY,
+intervention_id TINYINT NOT NULL,
+objective_id TINYINT NOT NULL, 
+mission_name VARCHAR(100),
+FOREIGN KEY (intervention_id) REFERENCES intervention(intervention_id),
+FOREIGN KEY (objective_id) REFERENCES objective(objective_id) 
+);
+
+CREATE TABLE crime (
+crime_id TINYINT auto_increment PRIMARY KEY,
+intervention_id TINYINT NOT NULL,
+crime_type VARCHAR(100),
+crime_description VARCHAR(300),
+FOREIGN KEY (intervention_id) REFERENCES intervention(intervention_id)  
+);
+
+CREATE TABLE infrastructure (
+infrastructure_id TINYINT auto_increment PRIMARY KEY,
+intervention_id TINYINT NOT NULL,
+infrastructure_type VARCHAR(100),
+infrastructure_name VARCHAR(100),
+infrastructure_status VARCHAR(100),
+FOREIGN KEY (intervention_id) REFERENCES intervention(intervention_id)  
+);
+
+CREATE TABLE casualty (
+casualty_id TINYINT auto_increment PRIMARY KEY,
+intervention_id TINYINT NOT NULL,
+casualty_type VARCHAR(100),
+casualty_number INT,
+notes VARCHAR(200),
+FOREIGN KEY (intervention_id) REFERENCES intervention(intervention_id)  
+);
+
+-- Insert data into all tables in Military Intervention Database - -
+-- some manual inserts below; used data import wizard for others - - 
+
+INSERT INTO partnership VALUES (
+60,3,'Barbary states of 2nd Barbary War'
+);
+INSERT INTO budget VALUES(
+NULL,3,4200300400,1050075100,09-03-1986,09-04-1986
+);
+INSERT INTO economy VALUES (
+NULL,7,48050.22,0.02,0.2,80632000,'1903-01-01','1903-12-12'
+);
+
+ALTER TABLE deployment AUTO_INCREMENT = 1;
+-- because matching interventions accurately to some other tables based on id
+
+INSERT INTO intervention VALUES
+(NULL,96,1,42,'Operation Infinite Reach','\"US uses cruise missiles to attack suspected terrorist facilities\"','1998-01-01','1998-12-12')
+,(NULL,96,1,43,'Operation Enduring Freedom Phase 1','\"Invasion - ISAF in Afghanistan to help stabilize for new provisional government - NATO takes command over ISAF Aug 11 2003\"','2001-01-01','2003-12-12')
+,(NULL,96,1,43,'War in Afghanistan','\"Operation Enduring Freedom\"','2001-01-21','2022-12-12')
+,(NULL,96,1,44,'Operation Freedom Sentinel','\"Operation Freedom\'s Sentinel\"','2015-01-01','2021-12-12')
+,(NULL,96,2,34,'No Name','\"Albanian fighters force down a US Air Force jet that became lost and crossed into Albanian airspace. The plane and pilot were released two weeks later.\"','1958-01-01','1958-12-12')
+,(NULL,96,2,42,'Operation Silver Wake NEO','\"Albania. On March 15, 1997, President Clinton reported to Congress that on March 13, 1997, he had utilized U.S. military forces to evacuate certain U.S. government employees and private U.S. citizens from Tirana, Albania, and to enhance security for the U.S. embassy in that city.\"','1997-01-01','1997-12-12')
+,(NULL,96,3,4,'Second Barbary War','\"Algiers. The second Barbary War was declared against the United States by the Dey of Algiers of the Barbary states, an act not reciprocated by the United States. Congress did authorize a military expedition by statutes. A large fleet under U.S. Commodore Stephen Decatur attacked Algiers and obtained indemnities. Tripoli. After securing an agreement from Algiers, Decatur demonstrated with his squadron at Tunis and Tripoli, where he secured indemnities for offenses during the War of 1812.\"','1815-01-01','1815-12-12')
+,(NULL,96,4,15,'Kisembo Unrest','\"Angola, Portuguese West Africa. March 1. American residents at Kissembo called upon American and British ships to protect lives and property during problems with natives.\"','1860-01-01','1860-12-12')
+,(NULL,96,4,38,'No Name','\"CIA assists South African-backed rebels.\"','1976-01-01','1992-12-12')
+,(NULL,96,5,7,'Landing to Protect Foreign Interests During Unrest','\"October 31 to November 15. A force was sent ashore at Buenos Aires to protect the interests of the United States and other countries during an insurrection.\"','1833-01-01','1833-12-12')
+,(NULL,96,5,13,'Buenos Aires Protection','\"Argentina. February 3 to 12, 1852; September 17, 1852, to April 1853. Marines were landed and maintained in Buenos Aires to protect American interests during a revolution.\"','1852-01-01','1853-12-12')
+,(NULL,96,5,9,'Buenos Aires protective mission','\"1890 Argentina. A naval party landed to protect the U.S. consulate and legation in Buenos Aires.\"','1890-01-01','1890-12-12')
+,(NULL,96,6,40,'Drug seizure in Bolivia','\"Bolivia. U.S. Army personnel and aircraft assisted Bolivia in anti-drug operations.\"','1986-01-01','1986-12-12')
+,(NULL,96,7,42,'NATO Intervention in Bosnia','\"Bosnia. On February 28, 1993, the United States began an airdrop of relief supplies aimed at Muslims surrounded by Serbian forces in Bosnia. Ongoing peacekeeping and anti-terrorism activities in Bosnia thru 2006.\"','1993-01-01','2004-12-12')
+,(NULL,96,8,22,'Rio de Janeiro Affair','\"Brazil. January. A display of naval force sought to protect American commerce and shipping at Rio de Janeiro during a Brazilian civil war.\"','1894-01-01','1894-12-12')
+,(NULL,96,8,26,'No Name','\"United States threatened to intervene in Brazil if the Brazilian government did not protect the \"innocent\" interests and investments of its citizens.\"','1903-01-01','1903-12-12')
+,(NULL,96,9,32,'No Name','\"Germany pressed Bulgaria to renounce neutrality and join the Axis powers. Bulgaria declared war on both United States and Britain.\"','1941-01-01','1941-12-12')
+,(NULL,96,10,44,'Burundi Airlift','\"A small U.S. Air Force support team and two C-17 Globemaster III aircraft began airlift operations on December 12, 2013, in response to a French request for airlift support. The U.S. airmen conducted 16 flights from Burundi to the Central African Republic transporting 857 Burundian troops, 73 pallets of equipment, and 18 Burundian military vehicles. Fewer than 10 Americans remained on the ground serving as liaisons with the French military when operations were completed on December 30, 2013.\"','2013-01-01','2013-12-12')
+,(NULL,96,11,36,'Cambodia Bombing Campaign','\"Repeated spillovers/incursions in Cambodia during Vietnam War\"','1964-01-01','1969-12-12')
+,(NULL,96,11,36,'No Name','\"Case written, but incicent merged into Cam 1964.\"','1967-01-01','1967-12-12')
+,(NULL,96,60,40,'AWACS Deployment','\"Mubarak appealed to US for support and asked for the AWACS reconnaissance system. The Reagan administration agreed and deployed AWACS planes.\"','1983-01-01','1983-12-12')
+;
+
+INSERT INTO deployment VALUES
+ (NULL,1,20,'Operation Infinite Reach',10,0)
+,(NULL,2,20,'Operation Enduring Freedom Phase 1',11,1)
+,(NULL,3,19,'War in Afghanistan',12,1)
+,(NULL,4,18,'Operation Freedom Sentinel',13,0)
+,(NULL,5,17,'No Name',14,0)
+,(NULL,6,16,'Operation Silver Wake NEO',15,1)
+,(NULL,7,15,'Second Barbary War',16,1)
+,(NULL,8,14,'Kisembo Unrest',17,0)
+,(NULL,9,13,'No Name',18,1)
+,(NULL,10,12,'Landing to Protect Foreign Interests',19,1)
+,(NULL,11,11,'Buenos Aires Protection',20,0)
+,(NULL,12,10,'Buenos Aires protective mission',21,0)
+,(NULL,13,9,'Drug seizure in Bolivia',22,1)
+,(NULL,14,8,'NATO Intervention in Bosnia',23,0)
+,(NULL,15,7,'Rio de Janeiro Affair',24,1)
+,(NULL,16,6,'No Name',25,1)
+,(NULL,17,5,'No Name',26,1)
+,(NULL,18,4,'Burundi Airlift',27,0)
+,(NULL,19,3,'Cambodia Bombing Campaign',28,0)
+,(NULL,20,2,'No Name',29,1)
+,(NULL,20,1,'AWACS Deployment',30,0);
+
+INSERT INTO objective VALUES
+(NULL,'Maintain/Build Foreign Regime Authority',"Defend Empire, Policy Change",'Nulla tempus.'),
+(NULL,'No Objective Stated','','Nulla tempus.');
+
+
+-- QUERIES --
+
+-- Looking at all the data together: country, budget, incidents, etc.
+SELECT i.inter_name, c.country_name, i.start_date, i.end_date, DATEDIFF(end_date,start_date) AS `Days`,
+m.mission_name, o.objective_primary, i.inter_description 
+FROM intervention i INNER JOIN country c
+ON i.location_country_id=c.country_id
+INNER JOIN mission m -- add in mission info
+ON m.intervention_id=i.intervention_id
+INNER JOIN objective o -- get to objective info
+ON o.objective_id=m.objective_id
+;
+
+-- Now create View 
+CREATE VIEW interventions_overview AS
+SELECT i.inter_name AS `Intervention`, c.country_name AS `Country`, 
+YEAR(i.start_date) AS `Start Year`, YEAR(i.end_date) AS `End Year`, 
+DATEDIFF(end_date,start_date) AS `Days`,
+m.mission_name AS `Mission Name`, o.objective_primary AS `Objective`, 
+i.inter_description AS `Description`
+FROM intervention i INNER JOIN country c
+ON i.location_country_id=c.country_id
+INNER JOIN mission m -- add in mission info
+ON m.intervention_id=i.intervention_id
+INNER JOIN objective o -- get to objective info
+ON o.objective_id=m.objective_id
+;
+SELECT * FROM interventions_overview;
+
+-- WHERE HAS THE US INTERVENED THE MOST? -- 
+ 
+# Which country had the most military interventions? 
+SELECT COUNT(*) AS `Number of Interventions`, c.country_name
+FROM intervention i
+JOIN country c
+ON i.location_country_id=c.country_id
+GROUP BY location_country_id
+ORDER BY `Number of Interventions` DESC;
+
+# Show the latest intervention based on start date
+SELECT * FROM intervention
+WHERE start_date= (SELECT MAX(start_date) from intervention);
+
+
+-- WHEN HAS THE US INTERVENED THE MOST? -- 
+
+# How long were these conflicts? Which conflicts are still ongoing?
+SELECT inter_name AS `Intervention`, start_date AS `Start Date`, 
+end_date AS `End Date`, DATEDIFF(end_date,start_date) AS `Number of Days`, 
+inter_description AS `Description`
+FROM intervention 
+ORDER BY `Number of Days` DESC;
+
+SELECT inter_name AS `Intervention`, start_date AS `Start Date`, 
+(CASE WHEN end_date IS NULL THEN 'Still ongoing conflict'
+ELSE DATEDIFF(end_date,start_date)
+END)
+AS `Number of Days`
+FROM intervention 
+ORDER BY `Start Date` DESC;
+
+# How many interventions has the US engaged in? 
+# What is the average length, the maximum length, and the minimum length? 
+SELECT COUNT(*) AS `Number of Interventions`, 
+MIN(DATEDIFF(end_date,start_date)) AS `Minimum Duration (Days)`, 
+MAX(DATEDIFF(end_date,start_date)) AS `Maximum Duration (Days)`, 
+FORMAT(AVG(DATEDIFF(end_date,start_date)),1) AS `Average Duration (Days)`
+FROM intervention;
+
+
+-- Where has suffered the most in terms of human cost? --
+
+# List all interventions with casualty type and numbers associated
+SELECT * FROM casualty;
+SELECT i.inter_name, c.country_name, c2.casualty_type, c2.casualty_number, i.inter_description 
+FROM intervention i INNER JOIN casualty c2
+ON i.intervention_id=c2.intervention_id
+INNER JOIN country c 
+ON i.location_country_id=c.country_id;
+
+-- Which objective is correlated with greatest financial impacts and human costs? --
+
+# List the largest casualties that have been incurred and the intervention's objectives
+SELECT inter_name, c.country_name, o.objective_primary, b.military_amt,
+YEAR(i.start_date) AS 'start year', casualty_number FROM casualty
+INNER JOIN intervention i
+ON casualty.intervention_id=i.intervention_id
+INNER JOIN country c 
+ON i.location_country_id=c.country_id
+INNER JOIN mission m -- add in mission info
+ON m.intervention_id=i.intervention_id
+INNER JOIN objective o -- get to objective info
+ON o.objective_id=m.objective_id
+WHERE casualty_number = (SELECT MAX(casualty_number) FROM casualty) 
+;
+
+# List highest U.S. military budgets by intervention
+SELECT inter_name, b.military_amt, YEAR(i.start_date) AS 'start year' 
+FROM budget b
+JOIN intervention i
+ON i.acting_country_id = b.country_id
+WHERE military_amt = (SELECT MAX(military_amt) FROM budget) 
+AND b.end_date between i.start_date and i.end_date
+;
+
+# Which administration was responsible for the most casualties?
+SELECT admin_title, a.start_date, a.end_date, 
+c.country_name, i.inter_name, c2.casualty_number -- country_id = location_country in i
+FROM administration a 
+INNER JOIN intervention i 
+ON i.acting_country_id = a.country_id
+INNER JOIN country c
+ON i.location_country_id=c.country_id
+JOIN casualty c2
+ON i.intervention_id=c2.intervention_id
+WHERE a.end_date between i.start_date and i.end_date
+ORDER BY c2.casualty_number DESC;
+
+-- Is there a correlation between a country’s budget and an increase in military intervention? --
+
+# looking at highest military budget, intervention and duration length
+SELECT i.inter_name, i.days_duration, b.total_amt, b.military_amt, YEAR(i.start_date) AS 'start year' 
+FROM budget b
+JOIN intervention i
+ON i.acting_country_id = b.country_id
+JOIN country c
+ON b.country_id=c.country_id
+WHERE b.end_date between i.start_date and i.end_date
+ORDER BY b.military_amt ASC;
+
+-- OTHER TASKS --
+
+# Add duration (in days) generated column 
+ALTER TABLE intervention
+ADD COLUMN days_duration DECIMAL(9,2)
+GENERATED ALWAYS AS (DATEDIFF(end_date,start_date))
+;
+
+-- A user may start a search with a stated military objective, which returns the intervention name, country involved, etc. 
+SELECT i.inter_name, o.objective_primary FROM intervention i
+INNER JOIN country c 
+ON i.location_country_id=c.country_id
+INNER JOIN mission m -- add in mission info
+ON m.intervention_id=i.intervention_id
+INNER JOIN objective o -- get to objective info
+ON o.objective_id=m.objective_id
+WHERE o.objective_primary = "Remove Foreign Regime";
+
+-- Update existing data in DB --
+
+#First inserting a new row with NULL inter_name
+INSERT INTO intervention VALUES
+(NULL,96,78,45,NULL,'\"Test triggers and transactions\"','2018-01-01','2019-12-12', DEFAULT);
+
+#now update all NULL inter_name values with string
+SET SQL_SAFE_UPDATES = 0;
+UPDATE intervention
+SET intervention.inter_name = 'Unnamed' 
+WHERE inter_name IS NULL
+;
+
+-- Using a transaction to insert and update values --
+SET AUTOCOMMIT=0;
+START TRANSACTION;
+INSERT INTO `objective` 
+VALUES(NULL, 'Launch satellite', NULL, 'Some notes about this objective'); -- will be objid 22
+INSERT INTO `mission` 
+VALUES(NULL, 22, 22, 'Another mission name'); -- will be mission id 21
+UPDATE `military_interventions`.`intervention` SET `admin_id` = 45 WHERE `intervention_id` = 22;
+COMMIT;
+
+-- Create a trigger: if insert a new intervention, log in inserts table
+
+# Inserts Tabke
+CREATE TABLE inserts (
+    intervention_id INT,
+    changed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (intervention_id, changed_at)
+);
+
+# Trigger
+CREATE TRIGGER log_interv_inserts
+AFTER INSERT ON intervention
+FOR EACH ROW
+INSERT INTO
+ inserts VALUES(
+ NEW.intervention_id, DEFAULT)
+;
+
+# Test trigger with new insert
+INSERT INTO intervention VALUES
+(NULL,96,79,45,NULL,'\"Second - Test triggers and transactions\"','2019-01-01','2020-12-12', DEFAULT); 
+SELECT * FROM inserts;
+
+-- Delete data from the database --
+SELECT * FROM partnership WHERE alliance_name LIKE '%F';
+DELETE FROM partnership WHERE alliance_name LIKE '%F';
+SELECT * FROM partnership WHERE alliance_name LIKE '%F';
+
+-- end --
+
